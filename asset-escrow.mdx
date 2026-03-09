@@ -1,0 +1,43 @@
+---
+title: "Asset Escrow"
+description: "How resource encryption and licensing work for n4.gg scripts"
+---
+
+The **Asset Escrow** system, developed by Cfx.re in partnership with [Tebex](https://www.tebex.io/fivem), is the official way we protect and deliver resources sold on the n4.gg store. Your purchased scripts are encrypted and can only run on servers that own a valid license for them—so your code stays protected and your server is the only one that can use it.
+
+## How it works
+
+Asset Escrow is built for developers who sell FiveM resources and want to protect their work from being leaked or copied. Here's the flow:
+
+1. **Encryption** — Selected files in the resource are encrypted and locked as an "asset." Those files can't be viewed or edited; only the FiveM runtime can use them on an authorized server.
+
+2. **Licensing** — When the resource starts, FiveM checks your server's **license key** from the [Cfx Keymaster](https://keymaster.fivem.net). The resource runs only if the FiveM account that owns that key **also** owns the asset.
+
+3. **Purchase** — When you buy a script from our Tebex store, the asset is granted to the FiveM account you're logged in with. To use it, your server must use a license key generated on **that same account**.
+
+<Info>
+  **Server build:** Asset Escrow resources require FiveM server build **5181 or newer**. If you see "Error parsing script" or "Failed to load script," [update your server artifacts](https://docs.fivem.net/docs/server-manual/setting-up-a-server/).
+</Info>
+
+## What you need to know
+
+- **At checkout** — You'll be asked to log in with your FiveM account. That account is the one the resource is tied to. Use the **same FiveM account that owns the license key your server uses**, or the resource won't start.
+
+- **Managing assets** — You can view, download, and (once) transfer owned assets in the Keymaster under "Purchased assets" / asset grants. You'll also get a download link by email after purchase.
+
+<Card title="Keymaster – Asset grants" href="https://keymaster.fivem.net/asset-grants" icon="key">
+  View, download, and transfer your purchased assets
+</Card>
+
+## Common errors
+
+| Message | What to do |
+|--------|-------------|
+| **You lack the required entitlement** | Your server's license key isn't from the account that owns the asset. Use the correct key or [transfer the asset](https://keymaster.fivem.net/asset-grants) to the account that owns your server key. |
+| **Failed to verify protected resource** | The resource was likely copied without hidden files. Ensure the **`.fxap`** file (and any other hidden files) are present; some FTP or file tools skip them. Re-download from Keymaster if needed. |
+
+## Learn more
+
+<Card title="Asset Escrow (Cfx.re forum)" href="https://forum.cfx.re/t/introducing-asset-escrow-for-your-resources/4777151" icon="book">
+  Official announcement and full FAQ from Cfx.re
+</Card>

@@ -1,0 +1,44 @@
+---
+title: "Common issues"
+description: "Solutions for typical problems with n4.gg scripts"
+---
+
+## Authentication & Asset Escrow
+
+### "You lack the required entitlement" or resource won't start
+
+- **Cause:** The server's license key is not from the FiveM account that owns the asset.
+- **Fix:** In [Keymaster → Asset grants](https://keymaster.fivem.net/asset-grants), confirm the resource is on the same account as the license key in your `server.cfg`. Use that account's key, or [transfer the asset](https://keymaster.fivem.net/asset-grants) once to the account that owns your server key. Then restart the server.
+
+### "Failed to verify protected resource"
+
+- **Cause:** Protected files are missing—often the **`.fxap`** file. Some FTP or file tools don't copy hidden files.
+- **Fix:** Re-download the resource from [Keymaster → Asset grants](https://keymaster.fivem.net/asset-grants) and extract it again, making sure **all** files (including hidden ones like `.fxap`) are present in the resource folder.
+
+### "Error parsing script" / "Failed to load script"
+
+- **Cause:** Server build is too old. Asset Escrow resources need **FiveM server build 5181 or above**.
+- **Fix:** Update your server artifacts to the latest version (or at least 5181). See the [FiveM server docs](https://docs.fivem.net/docs/server-manual/setting-up-a-server/) for your setup.
+
+### "Invalid license key"
+
+- **Cause:** The server is using an invalid or expired Keymaster license.
+- **Fix:** Generate or renew a key at [Keymaster](https://keymaster.fivem.net) and set it in `server.cfg` (e.g. `sv_licenseKey "your_key_here"`). Restart the server.
+
+---
+
+## General
+
+### Script doesn't show up or won't start
+
+- Confirm the resource folder is inside your server's `resources` directory and that it's started in `server.cfg` (e.g. `ensure your_resource_name`).
+- Check the server console for red errors when the resource starts.
+
+### Config changes don't apply
+
+- Restart the resource or the full server after editing config files.
+- If the script caches config, clear any cache or restart again.
+
+---
+
+Still stuck? See the [FAQ](/faq) or [contact support](https://n4.gg/support).

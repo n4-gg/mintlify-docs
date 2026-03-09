@@ -1,0 +1,222 @@
+---
+title: "Configuration"
+description: "Configure the n4_queue resource"
+---
+
+The `n4_queue` resource ships as a folder named `n4_queue`.  
+At the root of that folder is a **`config.cfg`** file with sane defaults.
+
+By default, you should execute this file before starting the resource:
+
+```cfg
+exec @n4_queue/config.cfg
+ensure n4_queue
+```
+
+You can also copy any of the `set "queue:..."` convars into **any other `.cfg` file** (for example, your main `server.cfg`) as long as that file is executed **before** `ensure n4_queue`.
+
+## Core behavior
+
+| Convar | Default | Description |
+|--------|---------|-------------|
+| `queue:locale` | `"en"` | Locale file used from `locales/<locale>.json`. Controls all queue messages. |
+| `queue:server_startup_delay` | `60` | Seconds to hold all players in the queue when the server first starts before allowing joins. |
+| `queue:connection_delay` | `1` | Seconds to wait between each player being allowed to connect. Helps avoid timeouts on join. |
+| `queue:modify_hostname` | `0` | If `1`, adds the current queue count in front of your server name on the public server list. |
+| `queue:stack_priority` | `1` | If `1`, combines all priority rows/roles together. If `0`, only the row/role with the highest points is used. |
+| `queue:manual_connection` | `0` | If `1`, you handle the connection process manually via the `HandleConnection` export instead of the built‑in plug‑and‑play handler. |
+
+### `queue:manual_connection` (advanced)
+
+- **When `0` (default)**: `n4_queue` automatically hooks the `playerConnecting` event and manages the entire join flow. You just install the resource and configure convars; it is plug‑and‑play.
+- **When `1`**:
+  - `n4_queue` exposes a server export `HandleConnection(name, source, deferrals, identifier?)`.
+  - You must create your own `playerConnecting` handler and call `HandleConnection` **last**, after all your own checks (bans, frameworks, whitelists, etc.).
+  - Once `HandleConnection` is called, the queue takes over and runs its normal connection logic (deferrals, queue UI, etc.).
+
+Basic CfxLua 5.4 example:
+
+```lua
+local queue = exports.n4_queue
+
+---@param name string
+---@param deferrals table
+local function playerConnecting(name, _, deferrals)
+    local source = source
+
+    if IsPlayerBanned(source) then
+        return deferrals.done('You are banned from this server!')
+    elseif OtherCodeHere(source) then
+        return deferrals.done('...')
+    end
+
+    -- Optional unique identifier. If omitted, n4_queue will try Utils.getPrimaryIdentifier(source).
+    local identifier = 'steam:1234'
+
+    queue:HandleConnection(name, source, deferrals, identifier)
+end
+
+AddEventHandler('playerConnecting', playerConnecting)
+```
+
+Use this mode if you need full control over the connection pipeline; otherwise, leave `queue:manual_connection` at `0` for the simplest setup.
+
+## Grace priority
+
+| Convar | Default | Description |
+|--------|---------|-------------|
+| `queue:grace_priority_enabled` | `0` | If `1`, players receive temporary priority after disconnecting (useful for crashes). |
+| `queue:grace_priority_points` | `1000` | Temporary priority points granted when the player disconnects. |
+| `queue:grace_priority_timer` | `180` | Seconds the player has to reconnect before their grace priority expires. |
+
+## Discord integration
+
+| Convar | Default | Description |
+|--------|---------|-------------|
+| `queue:discord:enabled` | `0` | Enable Discord integration. |
+| `queue:discord:guild_id` | `""` | The guild (server) ID of your Discord. |
+| `queue:discord:require_identifier` | `0` | If `1`, the player must have a Discord identifier to connect. |
+| `queue:discord:require_in_guild` | `0` | If `1`, the player must be in your Discord server to connect. |
+| `queue:discord:whitelist_enabled` | `0` | If `1`, only players with specific Discord roles may connect. |
+| `queue:discord:whitelist_role_ids` | `["123", "1234", "1345"]` | Role IDs allowed when whitelist is enabled. Replace with your real role IDs. |
+| `queue:discord:prio_roles` | `{ "123": 5000, "1234": 2500, "1345": 1000 }` | Map of role ID → priority points. Higher points = higher queue priority. |
+| `queue:discord:use_nickname` | `0` | If `1`, uses the player's Discord nickname instead of their username. |
+| `queue:discord:allow_on_api_failure` | `1` | If `1`, players are allowed to connect when Discord/API is unavailable (fail open). If `0`, they are blocked with a `discord_api_unavailable` message (fail closed). |
+
+<Note>
+  For `queue:discord:prio_roles`, do not put a comma after the last role ID, and do not include comments inside the object.
+</Note>
+
+## Card, UI & timing
+
+| Convar | Default | Description |
+|--------|---------|-------------|
+| `queue:fallback_avatar` | `"https://cdn.n4.gg/misc/default-user.webp"` | Fallback avatar URL if the player's avatar is not found. |
+| `queue:logo_url` | `"https://cdn.n4.gg/branding/blue-512.png"` | Logo image URL shown on the queue card (default and subpages). |
+| `queue:card` | `"default"` | Name of the card file (without `.json`) in `cards/`. `"default"` uses `cards/default.json`. |
+| `queue:queue_list_display` | `15` | Number of players shown on the "Queue list" subpage (1–50). |
+| `queue:card_refresh_interval` | `1` | Seconds between each card refresh for a waiting player. Higher = less CPU, less responsive. |
+| `queue:queue_list_refresh` | `10` | Seconds between rebuilding the "Queue list" subpage (minimum 5). |
+
+Placeholders available in cards include `{{logo_url}}`, `{{position}}`, `{{queueLength}}`, `{{points}}`, `{{timeEmoji}}`, `{{hours}}`, `{{minutes}}`, `{{seconds}}`, `{{estimatedWait}}`, `{{card_*}}`, `{{website_url}}`, `{{discord_url}}`, `{{server_name}}`, `{{max_slots}}`, `{{reserved_slots}}`, and `{{available_slots}}`.
+
+For Queue List / View Points / Back to work actions, use `Action.Submit` with ids `players_card`, `points_card`, or `go_back`. See `cards/example.json` in the resource.
+
+## Slots, bypass & logging
+
+| Convar | Default | Description |
+|--------|---------|-------------|
+| `queue:reserved_slots` | `0` | Number of slots never filled by the queue (e.g. 48 max, 3 reserved = 45 queueable). Bypass users can use these slots. |
+| `queue:bypass_identifiers` | `"[]"` | JSON array of full identifiers that skip the queue (e.g. `["license2:abc123...", "discord:123456789"]`). When the server is full, bypass users are still added to the queue. |
+| `queue:console_logging` | `1` | If `1`, enables console logging for the queue. |
+| `queue:debug` | `0` | If `1`, enables debug mode. Only enable this while troubleshooting. |
+
+## Website / Discord links
+
+These convars are used by the queue for website and Discord links shown on the card.  
+You can set them here or reuse the same values across other resources:
+
+```cfg
+# set "Website" "https://servers.fivem.net"
+# set "Discord" "https://discord.com"
+```
+
+## Full example configuration
+
+Below is a full example you can paste into `server.cfg` and then adjust for your server:
+
+```cfg
+# Locale for the queue system
+set "queue:locale" "en"
+
+# Initial amount of time (in seconds) that players will be held in the queue on server startup before being allowed to load into the server
+set "queue:server_startup_delay" 60
+
+# Amount of time (in seconds) to wait in-between each player loading into your server
+set "queue:connection_delay" 1
+
+# Adds the queue count in front of your server name on the cfx public server list (0 = disabled, 1 = enabled)
+set "queue:modify_hostname" 0
+
+# If enabled, combine all rows/roles of prio together, otherwise, only use the row/role with the highest amount of points (0 = disabled, 1 = enabled)
+set "queue:stack_priority" 1
+
+# Gives players temporary priority points after they disconnect. useful if players crash, etc (0 = disabled, 1 = enabled)
+set "queue:grace_priority_enabled" 0
+
+# The amount of temporary priority points a player receives after they disconnect
+set "queue:grace_priority_points" 1000
+
+# The amount of time in seconds that a player has to re-connect to the server before their grace priority expires
+set "queue:grace_priority_timer" 180
+
+# Manually handle the queue connection process in an external resource through exports (0 = disabled, 1 = enabled)
+set "queue:manual_connection" 0
+
+# Enable Discord integration (0 = disabled, 1 = enabled)
+set "queue:discord:enabled" 0
+
+# The guild ID of your Discord server
+set "queue:discord:guild_id" ""
+
+# Require the player to have a Discord identifier to connect (0 = disabled, 1 = enabled)
+set "queue:discord:require_identifier" 0
+
+# Require the player to be in your Discord server to connect (0 = disabled, 1 = enabled)
+set "queue:discord:require_in_guild" 0
+
+# Enable Discord role whitelist (0 = disabled, 1 = enabled)
+set "queue:discord:whitelist_enabled" 0
+
+# The role IDs that players need to have in order to connect if whitelist is enabled
+set "queue:discord:whitelist_role_ids" ["123", "1234", "1345"]
+
+# Discord role ID to priority points (object: role ID -> points)
+set "queue:discord:prio_roles" {
+  "123": 5000,
+  "1234": 2500,
+  "1345": 1000
+}
+
+# Use the player's nickname from Discord instead of their username (0 = disabled, 1 = enabled)
+set "queue:discord:use_nickname" 0
+
+# When whitelist or require_in_guild is enabled and the Discord/API request fails:
+# 1 = allow player to connect anyway (fail open), 0 = block with discord_api_unavailable message (fail closed)
+set "queue:discord:allow_on_api_failure" 1
+
+# The fallback avatar to use if the player's avatar is not found
+set "queue:fallback_avatar" "https://cdn.n4.gg/misc/default-user.webp"
+
+# Logo image URL shown on the queue card (default card and subpages)
+set "queue:logo_url" "https://cdn.n4.gg/branding/blue-512.png"
+
+# Queue card: name of the card file (without .json) in the cards/ folder.
+set "queue:card" "default"
+
+# Number of players shown on the "Queue list" subpage card (1–50)
+set "queue:queue_list_display" 15
+
+# How often (in seconds) the queue card is refreshed for each waiting player (1 = every second).
+set "queue:card_refresh_interval" 1
+
+# How often (in seconds) the "Queue list" subpage is rebuilt (minimum 5).
+set "queue:queue_list_refresh" 10
+
+# Reserved slots: this many slots are never filled by the queue.
+set "queue:reserved_slots" 0
+
+# Bypass queue: identifiers in this list skip the queue and can use reserved slots.
+set "queue:bypass_identifiers" "[]"
+
+# Enable console logging (0 = disabled, 1 = enabled)
+set "queue:console_logging" 1
+
+# Enable debug mode (0 = disabled, 1 = enabled)
+set "queue:debug" 0
+
+# These are the convars the queue uses for the website and Discord links shown on the queue card.
+# Uncomment below to set them here, or set them in your server.cfg to reuse across other resources.
+# set "Website" "https://servers.fivem.net"
+# set "Discord" "https://discord.com"
+```

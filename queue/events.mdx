@@ -1,0 +1,31 @@
+---
+title: "Events"
+description: "Queue script events"
+---
+
+Events fired by the Queue resource for use in other scripts or for logging.
+
+## Server events
+
+| Event name | Payload | Description |
+|------------|---------|-------------|
+| *(Add real server event names and arguments from your Queue script)* | | |
+
+## Client events
+
+| Event name | Payload | Description |
+|------------|---------|-------------|
+| *(Add real client event names and arguments)* | | |
+
+### Example usage
+
+```lua
+-- Server
+RegisterNetEvent('n4_queue:playerJoined', function(source, position)
+  print(('Player %s joined from queue position %s'):format(source, position))
+end)
+```
+
+<Note>
+  Replace event names and payloads with the actual events from your Queue resource.
+</Note>

@@ -1,0 +1,35 @@
+---
+title: "Installation"
+description: "How to install the Queue script"
+---
+
+## Requirements
+
+- A FiveM server on **build 5181 or above** (required for Asset Escrow).
+- A valid [Cfx Keymaster](https://keymaster.fivem.net) license key.
+- Queue purchased on the **same FiveM account** that owns that license key (see [Asset Escrow](/asset-escrow)).
+
+## Steps
+
+1. **Download** the `n4_queue` resource from [Keymaster → Asset grants](https://keymaster.fivem.net/asset-grants) or from the link in your purchase email.
+
+2. **Extract** the full resource into your server's `resources` folder (e.g. `resources/n4_queue`). Keep **all** files—including hidden ones like `.fxap`—so the protected resource can verify correctly.
+
+3. **Add to `server.cfg`:**
+   ```cfg
+   exec @n4_queue/config.cfg
+   ensure n4_queue
+   ```
+   This runs the shipped `config.cfg` (with sane defaults) before starting the queue.
+
+4. *(Optional)* Put any `set "queue:..."` convars into another `.cfg` file of your choice, as long as that file is executed **before** `ensure n4_queue`.
+
+5. **Restart** the server (or run `refresh` and `ensure n4_queue`). The queue will run when players connect using your configured settings.
+
+<Note>
+  If the resource doesn't start, confirm your server license key is from the same FiveM account that owns the asset. See [Common issues](/common-issues).
+</Note>
+
+## Next step
+
+Configure the queue in [Configuration](/queue/configuration).
