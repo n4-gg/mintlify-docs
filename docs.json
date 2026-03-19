@@ -29,7 +29,6 @@
               "queue/introduction",
               "queue/installation",
               "queue/configuration",
-              "queue/commands",
               "queue/exports"
             ]
           }
