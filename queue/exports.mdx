@@ -1,29 +1,35 @@
 ---
 title: "Exports"
-description: "Queue script server exports"
+description: "Guide to the exports for the n4_queue resource"
 ---
 
-Exports let other resources interact with `n4_queue` from Lua. All exports are **server-side only**; the queue has no client exports.
+Exports let other resources interact with `n4_queue`. All exports are **server-side only**; the queue has no client exports.
 
 ## Server exports overview
 
-| Export                   | Arguments                                                                   | Returns   | Description                                                                                                          |
-| ------------------------ | --------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------- |
-| `HandleConnection`       | `name: string`, `source: number`, `deferrals: table`, `identifier?: string` | —         | Manually start the queue connection flow. Only used when `queue:manual_connection` is `1`.                           |
-| `GetDiscordUser`         | `identifier: string`                                                        | `table?`  | Discord user data for a player by their primary identifier. `nil` if not found or Discord disabled.                  |
-| `GetDiscordUserBySource` | `source: number`                                                            | `table?`  | Discord user data for a player by server id. `nil` if not found or Discord disabled.                                 |
-| `AddDiscordPrioRole`     | `roleId: string \| number`, `points: number`                                | —         | Add a Discord role → priority points mapping at runtime.                                                             |
-| `RemoveDiscordPrioRole`  | `roleId: string \| number`                                                  | —         | Remove a Discord priority role.                                                                                      |
-| `AddWhitelistRoleId`     | `roleId: string \| number`                                                  | —         | Add a Discord role ID to the whitelist (no duplicates).                                                              |
-| `RemoveWhitelistRoleId`  | `roleId: string \| number`                                                  | —         | Remove a Discord role ID from the whitelist.                                                                         |
-| `AddBypassIdentifier`    | `identifier: string`                                                        | —         | Add a full identifier to the queue bypass list (skips queue, can use reserved slots).                                |
-| `RemoveBypassIdentifier` | `identifier: string`                                                        | —         | Remove an identifier from the bypass list.                                                                           |
-| `IsPlayerInQueue`        | `identifier: string`                                                        | `boolean` | Whether a player with that identifier is currently in the queue.                                                     |
-| `SetGracePriority`       | `identifier: string`, `durationSeconds: number`                             | —         | Grant temporary grace priority; uses `queue:grace_priority_points` on next connect. Pass `0` or negative to clear.   |
-| `GetGracePriorityExpiry` | `identifier: string`                                                        | `number?` | Unix timestamp when grace priority expires, or `nil` if none.                                                        |
-| `RemoveGracePriority`    | `identifier: string`                                                        | —         | Remove grace priority for an identifier (e.g. after refund or admin action).                                         |
-| `Locale`                 | `key: string`, `...any`                                                     | `string`  | Get a localized string by key (same as queue UI). Supports format args, e.g. `Locale('card_position', 1, 10, 5000)`. |
-| `GetQueueConfig`         | —                                                                           | `table`   | Read-only snapshot of queue config (reserved_slots, max_slots, grace settings, etc.).                                |
+| Export                      | Arguments                                                                   | Returns   | Description                                                                                                          |
+| --------------------------- | --------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------- |
+| `HandleConnection`          | `name: string`, `source: number`, `deferrals: table`, `identifier?: string` | —         | Manually start the queue connection flow. Only used when `queue:manual_connection` is `1`.                           |
+| `GetDiscordUser`            | `identifier: string`                                                        | `table?`  | Discord user data for a player by their primary identifier. `nil` if not found or Discord disabled.                  |
+| `GetDiscordUserBySource`    | `source: number`                                                            | `table?`  | Discord user data for a player by server id. `nil` if not found or Discord disabled.                                 |
+| `AddDiscordPrioRole`        | `roleId: string \| number`, `points: number`                                | —         | Add a Discord role → priority points mapping at runtime.                                                             |
+| `RemoveDiscordPrioRole`     | `roleId: string \| number`                                                  | —         | Remove a Discord priority role.                                                                                      |
+| `AddWhitelistRoleId`        | `roleId: string \| number`                                                  | —         | Add a Discord role ID to the whitelist (no duplicates).                                                              |
+| `RemoveWhitelistRoleId`     | `roleId: string \| number`                                                  | —         | Remove a Discord role ID from the whitelist.                                                                         |
+| `AddBypassIdentifier`       | `identifier: string`                                                        | —         | Add a full identifier to the queue bypass list (skips queue, can use reserved slots).                                |
+| `RemoveBypassIdentifier`    | `identifier: string`                                                        | —         | Remove an identifier from the bypass list.                                                                           |
+| `IsPlayerInQueue`           | `identifier: string`                                                        | `boolean` | Whether a player with that identifier is currently in the queue.                                                     |
+| `GetPlayerPosition`         | `identifier: string`                                                        | `table?`  | Queue position info for a player (`position`, `totalInQueue`). `nil` if not in queue.                                |
+| `GetQueueLength`            | —                                                                           | `number`  | Current number of players in the queue.                                                                              |
+| `GetPlayerPriorityPoints`   | `identifier: string`                                                        | `number?` | Priority points for a player in the queue. `nil` if not in queue.                                                    |
+| `GetTopQueuePlayers`        | `count?: number`                                                            | `table[]` | Top N players in queue (default 10). Each entry: `priorityPoints`, `username`, `avatar`.                             |
+| `GetEstimatedWaitString`    | `position: number`, `startupDelay: number`                                  | `string?` | Human-readable estimated wait (e.g. `"2m 30s"`). Uses startup delay or advance history. `nil` if unknown.            |
+| `GetConnectingPlayersCount` | —                                                                           | `number`  | Number of players currently in the connecting state (post-queue, before fully loaded in).                            |
+| `SetGracePriority`          | `identifier: string`, `durationSeconds: number`                             | —         | Grant temporary grace priority; uses `queue:grace_priority_points` on next connect. Pass `0` or negative to clear.   |
+| `GetGracePriorityExpiry`    | `identifier: string`                                                        | `number?` | Unix timestamp when grace priority expires, or `nil` if none.                                                        |
+| `RemoveGracePriority`       | `identifier: string`                                                        | —         | Remove grace priority for an identifier (e.g. as an admin action).                                                   |
+| `Locale`                    | `key: string`, `...any`                                                     | `string`  | Get a localized string by key (same as queue UI). Supports format args, e.g. `Locale('card_position', 1, 10, 5000)`. |
+| `GetQueueConfig`            | —                                                                           | `table`   | Read-only snapshot of queue config (reserved_slots, max_slots, grace settings, etc.).                                |
 
 ---
 
@@ -43,10 +49,17 @@ local queue = exports.n4_queue
 
 AddEventHandler('playerConnecting', function(name, _, deferrals)
     local source = source
-    if IsPlayerBanned(source) then
+    local identifier = GetPlayerIdentifierByType(source, 'steam')
+
+    deferrals.defer()
+    Wait(0)
+    deferrals.update('Checking if you are banned...')
+
+    if IsPlayerBanned(identifier) then
         return deferrals.done('You are banned!')
     end
-    queue:HandleConnection(name, source, deferrals) -- identifier optional
+
+    queue:HandleConnection(name, source, deferrals, identifier) -- identifier optional
 end)
 ```
 
@@ -56,7 +69,7 @@ end)
 
 Only apply when Discord integration is enabled (`queue:discord:enabled` = `1`).
 
-- **GetDiscordUser** / **GetDiscordUserBySource** — Look up cached Discord user data (e.g. username, avatar, roles) by primary identifier or by `source`.
+- **GetDiscordUser** / **GetDiscordUserBySource** — Look up cached Discord user data (e.g. username, nickname, avatar, roles) by primary identifier or by `source`.
 - **AddDiscordPrioRole** / **RemoveDiscordPrioRole** — Add or remove a Discord role → priority points entry at runtime without editing config.
 - **AddWhitelistRoleId** / **RemoveWhitelistRoleId** — Add or remove a role ID from the Discord whitelist at runtime.
 
@@ -66,7 +79,7 @@ local queue = exports.n4_queue
 -- Add a priority role when your resource starts
 queue:AddDiscordPrioRole('123456789', 5000)
 
--- Check if a connecting player has Discord data
+-- Check if a connected player has Discord data
 local discord = queue:GetDiscordUserBySource(source)
 if discord then
     print(discord.username, discord.avatar)
@@ -85,7 +98,7 @@ Players whose identifier is in the bypass list skip the queue and can use reserv
 ```lua
 local queue = exports.n4_queue
 
--- Grant bypass to a specific license (e.g. after a purchase)
+-- Grant bypass to a specific license (e.g. through an admin command)
 queue:AddBypassIdentifier('license2:abc123...')
 
 -- Revoke bypass
@@ -97,21 +110,52 @@ queue:RemoveBypassIdentifier('license2:abc123...')
 ## Queue state
 
 - **IsPlayerInQueue(identifier)** — Returns `true` if a player with that primary identifier is currently in the queue, `false` otherwise.
+- **GetPlayerPosition(identifier)** — Returns a table with `position` (1-based) and `totalInQueue`, or `nil` if the player is not in the queue.
+- **GetQueueLength()** — Returns the current number of players in the queue.
+- **GetPlayerPriorityPoints(identifier)** — Returns the priority points for that player if they are in the queue, or `nil` if not.
+- **GetTopQueuePlayers(count?)** — Returns the top `count` players (default `10`) in the queue. Each entry has `priorityPoints`, `username`, and `avatar`.
+- **GetEstimatedWaitString(position, startupDelay)** — Returns a human-readable estimated wait (e.g. `"2m 30s"`) for someone at the given queue position. Uses `startupDelay` (seconds) when the server is still in startup; otherwise uses recent advance history. Returns `nil` when an estimate cannot be computed.
+- **GetConnectingPlayersCount()** — Returns how many players are currently in the connecting state (past the queue, not yet fully loaded in).
 
 ```lua
 local queue = exports.n4_queue
+
+-- Check if in queue and get position
 local inQueue = queue:IsPlayerInQueue('license2:abc123...')
+local pos = queue:GetPlayerPosition('license2:abc123...')
+if pos then
+    print('Position:', pos.position, 'of', pos.totalInQueue)
+end
+
+-- Queue size and priority
+local length = queue:GetQueueLength()
+local points = queue:GetPlayerPriorityPoints('license2:abc123...')
+
+-- Top players for a leaderboard
+local top = queue:GetTopQueuePlayers(5)
+for i, p in ipairs(top) do
+    print(i, p.username, p.priorityPoints)
+end
+
+-- Estimated wait (e.g. for UI)
+local waitStr = queue:GetEstimatedWaitString(3, 0)  -- position 3, no startup delay
+if waitStr then
+    print('Estimated wait:', waitStr)
+end
+
+-- Players past queue but still connecting
+local connecting = queue:GetConnectingPlayersCount()
 ```
 
 ---
 
 ## Grace priority
 
-Grace priority gives a player temporary priority points when they next connect (e.g. after a crash or purchase). The queue uses `queue:grace_priority_points` and `queue:grace_priority_timer` for the actual points and duration unless you only set expiry.
+Grace priority gives a player temporary priority points when they next connect (e.g. after a crash or disconnect). The queue uses `queue:grace_priority_points` and `queue:grace_priority_timer` for the actual points and duration unless you only set expiry.
 
 - **SetGracePriority(identifier, durationSeconds)** — Grant grace priority for `durationSeconds` seconds. Pass `0` or a negative number to clear.
 - **GetGracePriorityExpiry(identifier)** — Returns the Unix timestamp when grace expires, or `nil` if the player has no grace priority.
-- **RemoveGracePriority(identifier)** — Remove grace priority (e.g. after refund or admin action).
+- **RemoveGracePriority(identifier)** — Remove grace priority (e.g. as an admin action).
 
 ```lua
 local queue = exports.n4_queue
@@ -125,7 +169,7 @@ if expiry and os.time() < expiry then
     print('Grace active until ' .. os.date('%c', expiry))
 end
 
--- Revoke (e.g. refund)
+-- Revoke grace priority
 queue:RemoveGracePriority('license2:abc123...')
 ```
 
