@@ -30,7 +30,6 @@
               "queue/installation",
               "queue/configuration",
               "queue/commands",
-              "queue/events",
               "queue/exports"
             ]
           }
